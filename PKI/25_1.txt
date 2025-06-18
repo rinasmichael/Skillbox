@@ -1,0 +1,146 @@
+1. Инициализируем подключение к YC (yc init)
+2. Создаем сеть 
+yc vpc network create --name sb-network-1 --description "for sb"
+  folder_id: b1goqsaidcslutlnuhl5
+  created_at: "2025-04-13T11:22:25Z"
+  name: sb-network-1
+  description: for sb
+  default_security_group_id: enp6dq1qbfjrnsvjsd5g
+Создаем подсеть
+yc vpc subnet create --name sb-subnet-1 --description "for sb" --network-name sb-network-1 --zone ru-central1-b --range 192.168.0.0/24
+  id: e2l56e5qq70tv4up8b27
+  folder_id: b1goqsaidcslutlnuhl5
+  created_at: "2025-05-28T07:01:19Z"
+  name: sb-subnet-1
+  description: for sb
+  network_id: enpjhmn0fuei7lcqio4b
+  zone_id: ru-central1-b
+  v4_cidr_blocks:
+    - 192.168.0.0/24
+Создаем SSH ключ для ВМ
+ssh-keygen -t ed25519 -C "for yc"
+pub ключ : "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBrsaNKly1fngWi7zKzg8dAfcxAv5YqM8eyvvq7HLLBf for yc"
+Создаем VM 
+yc compute instance create --name pki-server --preemptible --zone ru-central1-b --network-interface subnet-name=sb-subnet-1,nat-ip-version=ipv4 --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-24-04-lts,size=10G, --memory 2G --cores 2 --hostname pki-srv.rma-dev.ru --ssh-key C:\Users\mr\.ssh\id_rsa.pub 
+  id: epd4juc4j6vc8cdoa66l
+  folder_id: b1goqsaidcslutlnuhl5
+  created_at: "2025-05-28T07:02:39Z"
+  name: pki-server
+ zone_id: ru-central1-b
+  platform_id: standard-v2
+ resources:
+    memory: "2147483648"
+    cores: "2"
+    core_fraction: "100"
+  status: RUNNING 
+  metadata_options:
+    gce_http_endpoint: ENABLED
+    aws_v1_http_endpoint: ENABLED
+    gce_http_token: ENABLED
+    aws_v1_http_token: DISABLED
+  boot_disk:
+    mode: READ_WRITE
+    device_name: epd3gr90m1cknrisc4hg
+    auto_delete: true
+    disk_id: epd3gr90m1cknrisc4hg
+  network_interfaces:
+    - index: "0"
+      mac_address: d0:0d:49:f9:84:99
+      subnet_id: e2l56e5qq70tv4up8b27
+      primary_v4_address:
+        address: 192.168.0.11
+        one_to_one_nat:
+          address: 158.160.20.127
+          ip_version: IPV4
+  serial_port_settings:
+    ssh_authorization: OS_LOGIN
+  gpu_settings: {}
+  fqdn: epd4juc4j6vc8cdoa66l.auto.internal
+  scheduling_policy:
+    preemptible: true
+  network_settings:
+    type: STANDARD
+  placement_policy: {}
+  hardware_generation:
+    legacy_features:
+      pci_topology: PCI_TOPOLOGY_V1
+Создадим статику IP 
+yc vpc address update e2l9fqmrqg5o74471652 --reserved=true
+  id: e2l9fqmrqg5o74471652
+  folder_id: b1goqsaidcslutlnuhl5
+  created_at: "2025-05-28T07:02:57Z"
+  external_ipv4_address:
+    address: 158.160.20.127
+    zone_id: ru-central1-b
+    requirements: {}
+  reserved: true
+  used: true 
+  type: EXTERNAL
+  ip_version: IPV4
+-----------------------------------
+Установка Easy-Rsa
+sudo apt-get update
+sudo apt install easy-rsa -y
+mkdir ~/easy-rsa
+ln -s /usr/share/easy-rsa/* ~/easy-rsa/
+chmod 700 ~/easy-rsa
+cd ~/easy-rsa
+./easyrsa init-pki
+
+#'init-pki' complete; you may now create a CA or requests.
+
+Your newly created PKI dir is:
+* /home/yc-user/easy-rsa/pki
+
+Using Easy-RSA configuration:
+* undefined
+#for ssh Security close root login,password login and enable Pubkey auth
+sudo sed -i '/PermitRootLogin\|PermitEmptyPasswords\|PasswordAuthentication\|PubkeyAuthentication/Id' /etc/ssh/sshd_config
+sudo cat >> /etc/ssh/sshd_config <<EOF
+PermitRootLogin No
+PasswordAuthentication No
+PermitEmptyPasswords No
+PubkeyAuthentication yes
+EOF
+sudo systemctl restart sshd
+
+
+#Создаем файл vars в корне easy-rsa
+read -p "Enter EASYRSA_REQ_COUNTRY var: " EASYRSA_REQ_COUNTRY
+read -p "Enter EASYRSA_REQ_PROVINCE var: " EASYRSA_REQ_PROVINCE
+read -p "Enter EASYRSA_REQ_CITY var: " EASYRSA_REQ_CITY
+read -p "Enter EASYRSA_REQ_ORG var: " EASYRSA_REQ_ORG
+read -p "Enter EASYRSA_REQ_EMAIL var: " EASYRSA_REQ_EMAIL
+read -p "Enter EASYRSA_REQ_OU var: " EASYRSA_REQ_OU
+cat >> ~/easy-rsa/vars <<EOF
+set_var EASYRSA_REQ_COUNTRY $EASYRSA_REQ_COUNTRY
+set_var EASYRSA_REQ_PROVINCE $EASYRSA_REQ_PROVINCE
+set_var EASYRSA_REQ_CITY $EASYRSA_REQ_CITY
+set_var EASYRSA_REQ_ORG $EASYRSA_REQ_ORG
+set_var EASYRSA_REQ_EMAIL $EASYRSA_REQ_EMAIL
+set_var EASYRSA_REQ_OU $EASYRSA_REQ_OU
+set_var EASYRSA_ALGO "ec"
+set_var EASYRSA_DIGEST "sha512"
+EOF
+
+Создаем корневой сертификат ./easyrsa build-ca
+Common name pki-server.rma-dev.ru
+
+-----------------------------------
+устанавливаем sudo apt-get install iptables-persistent -y
+запрещаем все, кроме SSH( потом решим что еще открыть)
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p icmp --icmp-type 8 -j ACCEPT
+sudo iptables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
+sudo iptables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -P INPUT DROP
+-------------------------------------------------
+sudo netfilter-persistent save
+
+v2
+
+копируем на сервер easy-pki server.k
+Подписываем сертификат сервера vpn
+./easyrsa sign-req server server
+
