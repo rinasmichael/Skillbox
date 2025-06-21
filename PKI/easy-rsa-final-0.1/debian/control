@@ -1,0 +1,15 @@
+Source: easy-rsa-final
+Section: skillbox
+Priority: optional
+Maintainer: Rinas Mikhail <rinasmichael@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.0
+Homepage: https://github.com/rinasmichael/Skillbox
+#Vcs-Browser: https://salsa.debian.org/debian/easy-rsa
+#Vcs-Git: https://salsa.debian.org/debian/easy-rsa.git
+Rules-Requires-Root: no
+
+Package: easy-rsa-final
+Architecture: all
+Depends: easy-rsa, gpg
+Description: Installing Easy-rsa and gpg packages...
