@@ -144,3 +144,8 @@ v2
 Подписываем сертификат сервера vpn
 ./easyrsa sign-req server server
 
+
+
+
+chown -R yc-user:yc-user /opt/easy-rsa
+#Cert PKI_SRV  /opt/easy-rsa/ca.crt
