@@ -149,3 +149,210 @@ v2
 
 chown -R yc-user:yc-user /opt/easy-rsa
 #Cert PKI_SRV  /opt/easy-rsa/ca.crt
+--------------------------------------
+
+2) Выбираем подсеть для виртуалки 
+yc vpc subnet list
+ sb-subnet-1
+yc compute instance create --name vpn-server --preemptible --zone ru-central1-b --network-interface subnet-name=sb-subnet-1,nat-ip-version=ipv4 --create-boot-disk image-folder-id=standard-images,image-family=ubuntu-24-04-lts,size=10G --memory 2G --cores 2 --core-fraction 5 --hostname vpn-srv.rma-dev.ru --ssh-key C:\Users\mr\.ssh\id_rsa.pub
+
+158.160.1.206
+
+sudo apt update
+sudo apt-get install iptables-persistent -y
+sudo iptables -A INPUT -p tcp --dport 1194 -j ACCEPT
+sudo netfilter-persistent save
+sudo apt install easy-rsa openvpn 
+sudo mkdir -p /opt/easy-rsa
+sudo mkdir -p /opt/openvpn
+sudo ln -s /usr/share/easy-rsa/* /opt/easy-rsa/
+sudo ln -s /etc/openvpn/* /opt/openvpn/
+sudo chown -R $USER:$USER /opt/easy-rsa
+sudo chown -R $USER:$USER /opt/openvpn
+sudo chown -R $USER:$USER /etc/openvpn
+cd /opt/easy-rsa
+./easyrsa init-pki
+./easyrsa gen-req server nopass
+Private-Key and Public-Certificate-Request files created.
+Your files are:
+* req: /opt/easy-rsa/pki/reqs/server.req
+* key: /opt/easy-rsa/pki/private/server.key
+hostname vpn.rma-dev.ru
+#копируем ключи для работы через ssh двух серверов...
+scp C:\Users\mr\.ssh\id_rsa.pub yc-user@pki.rma-dev.ru:~/.ssh/
+scp C:\Users\mr\.ssh\id_rsa yc-user@pki.rma-dev.ru:~/.ssh/
+scp C:\Users\mr\.ssh\id_rsa.pub yc-user@vpn.rma-dev.ru:~/.ssh/
+scp C:\Users\mr\.ssh\id_rsa yc-user@vpn.rma-dev.ru:~/.ssh/
+
+#Копируем из VPN-SERVER в PKI
+chown 600 
+scp /opt/easy-rsa/pki/reqs/server.req pki.rma-dev.ru:/opt/easy-rsa/pki/reqs/server.req
+scp /opt/easy-rsa/pki/private/server.key pki.rma-dev.ru:/opt/easy-rsa/pki/private/server.key
+
+
+
+
+#подписываем на PKI-SERVER:
+./easyrsa sign-req server server 
+
+# commonName                = vpn.rma-dev.ru -----yes...вводим пароль на сертификат
+#Certificate created at:
+#* /opt/easy-rsa/pki/issued/server.crt
+
+копируем в впн сервер серты ca.crt и server.crt
+mkdir /opt/openvpn/certs/
+scp pki.rma-dev.ru:/opt/easy-rsa/pki/ca.crt /opt/openvpn/certs/
+scp pki.rma-dev.ru:/opt/easy-rsa/pki/issued/server.crt /opt/openvpn/certs/
+
+#Создание  tls-crypt
+openvpn --genkey secret ta.key
+sudo cp ta.key /etc/openvpn/server
+#Создаем клиентов
+mkdir -p opt/openvpn/clients/keys
+
+
+
+--Подписываем на pki server
+
+--./easyrsa sign-req client client-1
+--#Certificate created at:
+--#* /opt/easy-rsa/pki/issued/client-1.crt
+--копируем этот файл на сервер впн
+--scp pki.rma-dev.ru:/opt/easy-rsa/pki/issued/client-1.crt /opt/openvpn/certs/
+--????sudo cp /opt/openvpn/certs/client-1.crt /etc/openvpn/server/
+
+
+Конфигурим server.conf:
+cp /usr/share/doc/openvpn/examples/sample-config-files/server.conf /etc/openvpn/
+
+
+tls-crypt ta.key
+cipher AES-256-GCM
+auth SHA256
+dh none
+user nobody
+group nogroup
+
+cp /opt/openvpn/certs/*.crt /etc/openvpn/server
+
+/etc/systemctl.conf
+sudo sed -i "$ a net.ipv4.ip_forward = 1" /etc/sysctl.conf
+sudo sysctl -p
+
+firewall:
+interface $INTERFACE udp 1194
+
+INTERFACE=$(ip route show default | awk '/default/ {print $5}')
+
+sudo iptables -A INPUT -i $INTERFACE -m state --state NEW -p "udp" --dport 1194 -j ACCEPT
+sudo iptables -A INPUT -i tun+ -j ACCEPT
+sudo iptables -A FORWARD -i tun+ -j ACCEPT
+sudo iptables -A FORWARD -i tun+ -o $INTERFACE -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i $INTERFACE -o tun+ -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o $INTERFACE -j MASQUERADE
+
+
+mkdir -p /etc/openvpn/server/keys
+mv /etc/openvpn/server/*.key /etc/openvpn/server/keys/
+
+sudo systemctl enable openvpn-server@server.service
+sudo systemctl start openvpn-server@server.service
+sudo systemctl status openvpn-server@server.service
+
+mkdir -p ~/clients/files
+cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ~/clients/base.conf
+конфиг
+remote IP-address
+tls-crypt ta.key 1
+cipher AES-256-GCM
+auth SHA256
+key-direction 1
+redirect-gateway def1 - для Windows - полный роутинг 0.0.0.0
+
+scp pki.rma-dev.ru:/opt/easy-rsa/pki/ca.crt ~/
+cp ca.crt clients/
+cp client-1.crt ~/clients/keys/
+sudo cp /etc/openvpn/server/ta.key ~/clients/keys/
+scp pki.rma-dev.ru:/opt/easy-rsa/pki/private/client-1.key ~/
+cp ~/client-1.key ~/clients/keys/
+
+
+
+
+sudo vim /etc/openvpn/server/server.conf
+
+
+______
+
+
+Действия сотрудника(клиента) компании
+sudo apt install easy-rsa openvpn 
+sudo mkdir -p /opt/easy-rsa
+sudo mkdir -p /opt/openvpn
+sudo ln -s /usr/share/easy-rsa/* /opt/easy-rsa/
+sudo ln -s /etc/openvpn/* /opt/openvpn/
+sudo chown -R $USER:$USER /opt/easy-rsa
+sudo chown -R $USER:$USER /opt/open-vpn
+
+cd /opt/easy-rsa
+read -p "Enter your name for access to OpenVPN server" CLIENT
+./easy-rsa init-pki
+./easyrsa gen-req $CLIENT nopass
+#копируем на pki-srv:
+scp /opt/easy-rsa/pki/reqs/client-1.req pki.rma-dev.ru:/opt/easy-rsa/pki/reqs/client-1.req
+###scp /opt/easy-rsa/pki/private/client-1.key pki.rma-dev.ru:/opt/easy-rsa/pki/private/client-1.key -это личный ключ клента
+Клиенту должны прийти файлы обратно
+$CLIENT_NAME.crt FROM PKI-SERVER
+ta.key - from OPENVPN server
+ca.crt - from PKI SERVER
+mv opt/easy-rsa/pki/private/$CLIENT  /opt/open-vpn/certs
+
+CLIENT_NAME=m.rinas
+OUTPUT_DIR=/opt/open-vpn
+BASE_CONFIG=/opt/open-vpn/m.rinas.conf
+KEY_DIR=/opt/open-vpn/certs
+
+cat ${BASE_CONFIG} \
+<(echo -e '<ca>') \
+${KEY_DIR}/ca.crt \
+<(echo -e '</ca>\n<cert>') \
+${KEY_DIR}/${CLIENT_NAME}.crt \
+<(echo -e '</cert>\n<key>') \
+${KEY_DIR}/${CLIENT_NAME}.key \
+<(echo -e '</key>\n<tls-crypt>') \
+${KEY_DIR}/ta.key \
+<(echo -e '</tls-crypt>\n') \
+> ${OUTPUT_DIR}/${CLIENT_NAME}.ovpn
+
+
+
+
+
+redirect-gateway def1
+
+
+
+
+
+
+
+
+
+
+На сервере PKI
+./easyrsa sign-req client $CLIENT_NAME
+--------------
+
+
+#linux client for vpn
+sudo apt-get update
+sudo apt-get install easy-rsa openvpn
+
+
+sudo mkdir -p /opt/easy-rsa
+sudo mkdir -p /opt/openvpn
+sudo ln -s /usr/share/easy-rsa/* /opt/easy-rsa/
+sudo ln -s /etc/openvpn/* /opt/openvpn/
+sudo chown -R $USER:$USER /opt/easy-rsa
+sudo chown -R $USER:$USER /opt/open-vpn
+
