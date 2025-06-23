@@ -85,6 +85,12 @@ mkdir ~/easy-rsa
 ln -s /usr/share/easy-rsa/* ~/easy-rsa/
 chmod 700 ~/easy-rsa
 cd ~/easy-rsa
+
+export DEBEMAIL="rinasmichael@gmail.com"
+export DEBFULLNAME="Rinas Mikhail"
+
+source ~/.bashrc
+
 ./easyrsa init-pki
 
 #'init-pki' complete; you may now create a CA or requests.
@@ -125,6 +131,26 @@ EOF
 
 Создаем корневой сертификат ./easyrsa build-ca
 Common name pki-server.rma-dev.ru
+
+-----------------------------------
+устанавливаем sudo apt-get install iptables-persistent -y
+запрещаем все, кроме SSH( потом решим что еще открыть)
+sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+sudo iptables -A INPUT -p icmp --icmp-type 8 -j ACCEPT
+sudo iptables -A INPUT -p udp -m state --state ESTABLISHED -j ACCEPT
+sudo iptables -A INPUT -p tcp -m state --state ESTABLISHED -j ACCEPT
+sudo iptables -A INPUT -i lo -j ACCEPT
+sudo iptables -P INPUT DROP
+-------------------------------------------------
+sudo netfilter-persistent save
+
+v2
+
+копируем на сервер easy-pki server.key
+Подписываем сертификат сервера vpn
+./easyrsa sign-req server server
+
+
 
 -----------------------------------
 устанавливаем sudo apt-get install iptables-persistent -y
