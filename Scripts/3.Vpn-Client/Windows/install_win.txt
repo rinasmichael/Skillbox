@@ -1,0 +1,10 @@
+#download easy-rsa for windows https://openvpn.net/client/ https://github.com/openvpn/easy-rsa/releases
+CLIENT=windows
+cmd Start-easyrsa.bat
+init-pki
+Your newly created PKI dir is:* C:/EasyRSA-3.2.3/pki
+./easyrsa gen-req $CLIENT nopass
+Your files are:
+* req: C:/EasyRSA-3.2.3/pki/reqs/windows.req
+* key: C:/EasyRSA-3.2.3/pki/private/windows.key
+scp C:/EasyRSA-3.2.3/pki/reqs/windows.req yc-user@pki.rma-dev.ru:/opt/easy-rsa/pki/reqs
