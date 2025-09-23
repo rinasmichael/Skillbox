@@ -1,6 +1,6 @@
- - Передаем клиенту скрипт(<https://github.com/rinasmichael/Skillbox/blob/46a93b346277e1074ae3e6594c3c658a472d4b88/Scripts/Client/gen_cert_client.sh>) установки easyrsa и создание запроса 
+ - Передаем клиенту скрипт(<https://github.com/rinasmichael/Skillbox/blob/main/Scripts/Client/gen_cert_client.sh>) установки easyrsa и создание запроса 
 
- - Получаем на админской машине этот req файл(кладем его в ~/clients/reqs)  и запускаем скрипт sign_cert_and_createfiles.sh(<https://github.com/rinasmichael/Skillbox/blob/46a93b346277e1074ae3e6594c3c658a472d4b88/Scripts/Client/sign_cert_and_createfiles.sh>) . 
+ - Получаем на админской машине этот req файл(кладем его в ~/clients/reqs)  и запускаем скрипт sign_cert_and_createfiles.sh(<https://github.com/rinasmichael/Skillbox/blob/main/Scripts/Client/sign_cert_and_createfiles.sh>) . 
 
  - Отправляем base.conf,ca.crt,ta.key,$client.crt и скрипт генерации ovpn файла(ovpn.sh)  и запуска openvpn-client клиенту 
 
