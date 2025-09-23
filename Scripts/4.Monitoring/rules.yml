@@ -295,15 +295,6 @@ groups:
     labels:
       severity: 'crit'
 
-alerting:
-  alertmanagers:
-  - scheme: https
-    basic_auth:
-      username: admin
-      password: password
-    tls_config:
-      ca_file: monitor.justnikobird.ru.crt
-    static_configs:
-    - targets: ['monitor.justnikobird.ru:9093']
+
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
