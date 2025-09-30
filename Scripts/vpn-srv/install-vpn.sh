@@ -68,4 +68,32 @@ sudo sysctl -p
 sudo systemctl enable openvpn-server@server.service
 sudo systemctl start openvpn-server@server.service
 sudo systemctl status openvpn-server@server.service
+#EXPORTERS:
+sudo apt-get install prometheus-node-exporter
+wget -P ~/ https://github.com/rinasmichael/Skillbox/raw/refs/heads/main/Scripts/vpn-srv/openvpn_exporter
+chmod +x openvpn_exporter
+sudo mv ~/openvpn_exporter /usr/bin/openvpn_exporter
+sudo cat >> /etc/systemd/system/openvpn_exporter.service <<EOF
+[Unit]
+Description=Prometheus OpenVPN Node Exporter
+Wants=network-online.target
+After=network-online.target
 
+[Service]
+User=openvpn_exporter
+Group=openvpn_exporter
+Type=simple
+ExecStart=/usr/bin/openvpn_exporter
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo addgroup --system "openvpn_exporter" --quiet
+sudo adduser --system --home /usr/share/openvpn_exporter --no-create-home --ingroup "openvpn_exporter" --disabled-password --shell /bin/false "openvpn_exporter"
+sudo usermod -a -G openvpn_exporter root
+sudo chgrp openvpn_exporter /var/log/openvpn/openvpn-status.log
+sudo chmod 660 /var/log/openvpn/openvpn-status.log
+sudo chown openvpn_exporter:openvpn_exporter /usr/bin/openvpn_exporter
+sudo chmod 755 /usr/bin/openvpn_exporter
+sudo systemctl enable openvpn_exporter.service
+sudo systemctl start openvpn_exporter.service
