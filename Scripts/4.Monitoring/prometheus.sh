@@ -6,7 +6,7 @@ while [ -z $PKISERVER ]; do
 read -p "Please enter IP-Address or Domain Name of PKI-SERVER " PKISERVER
 done
 while [ -z $VPNSERVER ]; do
-read -p "Please enter the login of VPNSERVER " VPNSERVER
+read -p "Please enter IP-Address or Domain Name of VPNSERVER " VPNSERVER
 done
 
 while [ -z $EMAIL ]; do
