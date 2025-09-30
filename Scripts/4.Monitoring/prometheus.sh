@@ -50,6 +50,7 @@ sudo systemctl restart prometheus.service
 sudo systemctl restart prometheus-alertmanager
 sudo systemctl restart prometheus-alertmanager.service
 
+sudo iptables -A INPUT -p tcp -m multiport --dports 22,3000,9090,9093,9100 -j ACCEPT
 sudo iptables -P INPUT DROP
 sudo iptables -P FORWARD DROP
 sudo iptables -P OUTPUT ACCEPT
