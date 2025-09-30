@@ -27,6 +27,10 @@ else
         echo "The file $SSH_KEY not found in the /home/.ssh/ directory"
         exit
 fi
+sudo debconf-set-selections <<EOF
+iptables-persistent iptables-persistent/autosave_v4 boolean true
+iptables-persistent iptables-persistent/autosave_v6 boolean true
+EOF
 
 sudo apt update && sudo apt-get install easy-rsa openvpn iptables-persistent -y
 sudo mkdir -p /opt/easy-rsa /opt/openvpn/certs
