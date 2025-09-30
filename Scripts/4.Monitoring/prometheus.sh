@@ -46,6 +46,9 @@ sudo mv -f alertmanager.yml /etc/prometheus/alertmanager.yml
 sudo systemctl daemon-reload
 sudo systemctl restart grafana-server.service
 sudo systemctl enable grafana-server.service
+sudo systemctl restart prometheus.service
+sudo systemctl restart prometheus-alertmanager
+sudo systemctl restart prometheus-alertmanager.service
 
 sudo iptables -P INPUT DROP
 sudo iptables -P FORWARD DROP
