@@ -19,7 +19,7 @@ while [ -z $AUTH_PASSWORD ]; do
 read -p "Please enter PASSWORD for your email $EMAIL " AUTH_PASSWORD
 done
 
-hostname $PROMETHEUS
+sudo hostname $PROMETHEUS
 wget https://raw.githubusercontent.com/rinasmichael/Skillbox/refs/heads/main/Scripts/4.Monitoring/rules.yml
 wget https://raw.githubusercontent.com/rinasmichael/Skillbox/refs/heads/main/Scripts/4.Monitoring/prometheus.yml
 sudo sed -i "s|#PROMETHEUS#|$PROMETHEUS|g" prometheus.yml
