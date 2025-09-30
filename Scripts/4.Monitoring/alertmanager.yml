@@ -2,15 +2,15 @@ global:
   resolve_timeout: 1m
 
 route:
-  receiver: 'yandex-smtp'
+  receiver: 'smtp'
 
 receivers:
-- name: 'yandex-smtp'
+- name: 'smtp'
   email_configs:
-  - to: rinasmichael@yandex.ru
-    from: rinasmichael@yandex.ru
-    smarthost: smtp.yandex.ru:587
-    auth_username: rinasmichael@yandex.ru
-    auth_identity: rinasmichael@yandex.ru
-    auth_password: lqgskzqjqzowkqfk
+  - to: #EMAIL#
+    from: #EMAIL#
+    smarthost: #SMTPSERVER#
+    auth_username: #EMAIL#
+    auth_identity: #EMAIL#
+    auth_password: #AUTH_PASSWORD#
     send_resolved: true
