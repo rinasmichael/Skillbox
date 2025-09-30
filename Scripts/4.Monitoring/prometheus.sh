@@ -1,4 +1,9 @@
 #!/bin/bash
+if [[ "${UID}" -ne 0 ]]; then
+  echo -e "You need to run this script as root!"
+  exit 1
+fi
+
 while [ -z $PROMETHEUS ]; do
 read -p "Please enter IP-Address or Domain Name of this PROMETHEUS server " PROMETHEUS
 done
