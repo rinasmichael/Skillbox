@@ -12,7 +12,7 @@ else
         exit
 fi
 
-sudo apt-get update && sudo apt install easy-rsa iptables-persistent -y
+sudo apt-get update && sudo apt install easy-rsa iptables-persistent prometheus-node-exporter -y
 sudo mkdir /opt/easy-rsa
 sudo ln -s /usr/share/easy-rsa/* /opt/easy-rsa/
 sudo chown -R $USER:$USER /opt/easy-rsa
@@ -53,5 +53,4 @@ sudo iptables -A INPUT -i lo -j ACCEPT
 sudo iptables -P INPUT DROP
 sudo netfilter-persistent save
 sudo systemctl restart ssh
-
 
