@@ -1,300 +1,84 @@
 groups:
-- name: ca
+- name: nodes
   rules:
-  - alert: CA_node_exporter_down
-    expr: up{job="node-ca"} == 0
+  - alert: Node_exporter_down
+    expr: up{job="nodes"} == 0
     for: 10s
     annotations:
-      title: 'CA Node Exporter Down'
-      description: 'CA Node Exporter Down'
+      title: 'Node Exporter Down on { $labels.instance }} '
+      description: 'Node Exporter Down on { $labels.instance }}'
     labels:
       severity: 'crit'
 
-  - alert: CA_High_CPU_utiluzation
-    expr: node_load1{job="node-ca"} > 0.9
+  - alert: High_CPU_utiluzation
+    expr: node_load1{job="nodes"} > 0.9
     for: 1m
     annotations:
-      title: 'High CPU utiluzation'
-      description: 'High CPU utiluzation'
+      title: 'High CPU utiluzation on { $labels.instance }}'
+      description: 'High CPU utiluzation on { $labels.instance }}'
     labels:
       severity: 'crit'
 
-  - alert: CA_High_memory_utiluzation
-    expr: ((node_memory_MemAvailable_bytes{job="node-ca"} / node_memory_MemTotal_bytes{job="node-ca"}) * 100) < 10
+  - alert: High_memory_utiluzation
+    expr: ((node_memory_MemAvailable_bytes{job="nodes"} / node_memory_MemTotal_bytes{job="nodes"}) * 100) < 10
     for: 1m
     annotations:
-      title: 'High memory utiluzation'
-      description: 'High memory utiluzation'
+      title: 'High memory utiluzation on { $labels.instance }}'
+      description: 'High memory utiluzation on { $labels.instance }}'
     labels:
       severity: 'crit'
 
-  - alert: CA_Disc_space_problem
-    expr: ((node_filesystem_avail_bytes{job="node-ca", mountpoint="/",fstype!="rootfs"} / node_filesystem_size_bytes{job="node-ca", mountpoint="/",fstype!="rootfs"}) * 100) < 10
+  - alert: Disc_space_problem
+    expr: ((node_filesystem_avail_bytes{job="nodes", mountpoint="/",fstype!="rootfs"} / node_filesystem_size_bytes{job="nodes", mountpoint="/",fstype!="rootfs"}) * 100) < 10
     for: 10m
     annotations:
-      title: 'Disk 90% full'
-      description: 'Disk 90% full'
+      title: 'Disk 90% full on { $labels.instance }}'
+      description: 'Disk 90% full on { $labels.instance }}'
     labels:
       severity: 'crit'
 
-  - alert: CA_High_port_incoming_utilization
-    expr: (rate(node_network_receive_bytes_total{job="node-ca", device="eth0"}[5m]) / 1024 / 1024) > 150
+  - alert: High_port_incoming_utilization
+    expr: (rate(node_network_receive_bytes_total{job="nodes", device="eth0"}[5m]) / 1024 / 1024) > 150
     for: 5s
     annotations:
-      title: 'High port input load'
-      description: 'Incoming port load > 150 Mb/s'
+      title: 'High port input load on { $labels.instance }}'
+      description: 'Incoming port load > 150 Mb/s on { $labels.instance }}'
     labels:
       severity: 'crit'
 
-  - alert: CA_High_port_outcoming_utilization
-    expr: (rate(node_network_transmit_bytes_total{ job="node-ca", device="eth0"}[5m]) / 1024 / 1024) > 150
+  - alert: High_port_outcoming_utilization
+    expr: (rate(node_network_transmit_bytes_total{ job="nodes", device="eth0"}[5m]) / 1024 / 1024) > 150
     for: 5s
     annotations:
-      title: High outbound port utilization
-      description: 'Outcoming port load > 150 Mb/s'
+      title: High outbound port utilization on { $labels.instance }}
+      description: 'Outcoming port load > 150 Mb/s on { $labels.instance }}'
     labels:
       severity: 'crit'
-
 - name: vpn
   rules:
-  - alert: Vpn_node_exporter_down
-    expr: up{job="node-vpn"} == 0
-    for: 10s
-    annotations:
-      title: 'Vpn Node Exporter Down'
-      description: 'Vpn Node Exporter Down'
-    labels:
-      severity: 'crit'
+    - alert: Vpn_exporter_down
+      expr: up{job="openvpn-metrics"} == 0
+      for: 10s
+      annotations:
+        title: 'Vpn Exporter Down'
+        description: 'Vpn Exporter Down'
+      labels:
+        severity: 'crit'
 
-  - alert: Vpn_exporter_down
-    expr: up{job="openvpn"} == 0
-    for: 10s
-    annotations:
-      title: 'Vpn Exporter Down'
-      description: 'Vpn Exporter Down'
-    labels:
-      severity: 'crit'
+    - alert: VpnDown
+      expr: openvpn_up == 0
+      for: 10s
+      annotations:
+        title: 'VPN Service down'
+        description: 'VPN Service down'
+      labels:
+        severity: 'crit'
 
-  - alert: VpnDown
-    expr: openvpn_up == 0
-    for: 10s
-    annotations:
-      title: 'VPN Service down'
-      description: 'VPN Service down'
-    labels:
-      severity: 'crit'
-
-  - alert: Vpn_NoClientConnected
-    expr: openvpn_server_connected_clients == 0
-    for: 10s
-    annotations:
-      title: 'No Client Connected'
-      description: 'No Client Connected'
-    labels:
-      severity: 'crit'
-
-  - alert: Vpn_High_CPU_utiluzation
-    expr: node_load1{job="node-vpn"} > 0.9
-    for: 1m
-    annotations:
-      title: 'High CPU utiluzation'
-      description: 'High CPU utiluzation'
-    labels:
-      severity: 'crit'
-
-  - alert: Vpn_High_memory_utiluzation
-    expr: ((node_memory_MemAvailable_bytes{job="node-vpn"} / node_memory_MemTotal_bytes{job="node-vpn"}) * 100) < 10
-    for: 1m
-    annotations:
-      title: 'High memory utiluzation'
-      description: 'High memory utiluzation'
-    labels:
-      severity: 'crit'
-
-  - alert: Vpn_Disc_space_problem
-    expr: ((node_filesystem_avail_bytes{job="node-vpn", mountpoint="/",fstype!="rootfs"} / node_filesystem_size_bytes{job="node-vpn", mountpoint="/",fstype!="rootfs"}) * 100) < 10
-    for: 10m
-    annotations:
-      title: 'Disk 90% full'
-      description: 'Disk 90% full'
-    labels:
-      severity: 'crit'
-
-  - alert: Vpn_High_port_incoming_utilization
-    expr: (rate(node_network_receive_bytes_total{job="node-vpn", device="eth0"}[5m]) / 1024 / 1024) > 150
-    for: 5s
-    annotations:
-      title: 'High port input load'
-      description: 'Incoming port load > 150 Mb/s'
-    labels:
-      severity: 'crit'
-
-  - alert: Vpn_High_port_outcoming_utilization
-    expr: (rate(node_network_transmit_bytes_total{ job="node-vpn", device="eth0"}[5m]) / 1024 / 1024) > 150
-    for: 5s
-    annotations:
-      title: High outbound port utilization
-      description: 'Outcoming port load > 150 Mb/s'
-    labels:
-      severity: 'crit'
-
-- name: monitor
-  rules:
-  - alert: Monitor_node_exporter_down
-    expr: up{job="node-monitor"} == 0
-    for: 10s
-    annotations:
-      title: 'Monitor Node Exporter Down'
-      description: 'Monitor Node Exporter Down'
-    labels:
-      severity: 'crit'
-
-  - alert: Monitor_prometheus_exporter_down
-    expr: up{job="prometheus-monitor"} == 0
-    for: 10s
-    annotations:
-      title: 'Monitor Node Exporter Down'
-      description: 'Monitor Node Exporter Down'
-    labels:
-      severity: 'crit'
-
-  - alert: Monitor_High_CPU_utiluzation
-    expr: node_load1{job="node-monitor"} > 0.9
-    for: 1m
-    annotations:
-      title: 'High CPU utiluzation'
-      description: 'High CPU utiluzation'
-    labels:
-      severity: 'crit'
-
-  - alert: Monitor_High_memory_utiluzation
-    expr: ((node_memory_MemAvailable_bytes{job="node-monitor"} / node_memory_MemTotal_bytes{job="node-monitor"}) * 100) < 10
-    for: 1m
-    annotations:
-      title: 'High memory utiluzation'
-      description: 'High memory utiluzation'
-    labels:
-      severity: 'crit'
-
-  - alert: Monitor_Disc_space_problem
-    expr: ((node_filesystem_avail_bytes{job="node-monitor", mountpoint="/",fstype!="rootfs"} / node_filesystem_size_bytes{job="node-monitor", mountpoint="/",fstype!="rootfs"}) * 100) < 10
-    for: 10m
-    annotations:
-      title: 'Disk 90% full'
-      description: 'Disk 90% full'
-    labels:
-      severity: 'crit'
-
-  - alert: Monitor_High_port_incoming_utilization
-    expr: (rate(node_network_receive_bytes_total{job="node-monitor", device="eth0"}[5m]) / 1024 / 1024) > 150
-    for: 5s
-    annotations:
-      title: 'High port input load'
-      description: 'Incoming port load > 150 Mb/s'
-    labels:
-      severity: 'crit'
-
-  - alert: Monitor_High_port_outcoming_utilization
-    expr: (rate(node_network_transmit_bytes_total{ job="node-monitor", device="eth0"}[5m]) / 1024 / 1024) > 150
-    for: 5s
-    annotations:
-      title: High outbound port utilization
-      description: 'Outcoming port load > 150 Mb/s'
-    labels:
-      severity: 'crit'
-
-- name: repo
-  rules:
-  - alert: Repo_node_exporter_down
-    expr: up{job="node-repo"} == 0
-    for: 10s
-    annotations:
-      title: 'Repo Node Exporter Down'
-      description: 'Repo Node Exporter Down'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_nginx_exporter_down
-    expr: up{job="nginx-repo"} == 0
-    for: 10s
-    annotations:
-      title: 'Repo Nginx Exporter Down'
-      description: 'Repo Nginx Exporter Down'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_NginxDown
-    expr: nginx_up == 0
-    for: 10s
-    annotations:
-      title: 'Nginx Service down'
-      description: 'Nginx Service down'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_NoActiveClientConnections
-    expr: nginx_connections_active == 1
-    for: 10s
-    annotations:
-      title: 'No active connections'
-      description: 'No active connections except nginx exporter'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_NoActiveConnections
-    expr: nginx_connections_active == 0
-    for: 10s
-    annotations:
-      title: 'No active connections'
-      description: 'No active connections'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_High_CPU_utiluzation
-    expr: node_load1{job="node-repo"} > 0.9
-    for: 1m
-    annotations:
-      title: 'High CPU utiluzation'
-      description: 'High CPU utiluzation'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_High_memory_utiluzation
-    expr: ((node_memory_MemAvailable_bytes{job="node-repo"} / node_memory_MemTotal_bytes{job="node-repo"}) * 100) < 10
-    for: 1m
-    annotations:
-      title: 'High memory utiluzation'
-      description: 'High memory utiluzation'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_Disc_space_problem
-    expr: ((node_filesystem_avail_bytes{job="node-repo", mountpoint="/",fstype!="rootfs"} / node_filesystem_size_bytes{job="node-repo", mountpoint="/",fstype!="rootfs"}) * 100) < 10
-    for: 10m
-    annotations:
-      title: 'Disk 90% full'
-      description: 'Disk 90% full'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_High_port_incoming_utilization
-    expr: (rate(node_network_receive_bytes_total{job="node-repo", device="eth0"}[5m]) / 1024 / 1024) > 150
-    for: 5s
-    annotations:
-      title: 'High port input load'
-      description: 'Incoming port load > 150 Mb/s'
-    labels:
-      severity: 'crit'
-
-  - alert: Repo_High_port_outcoming_utilization
-    expr: (rate(node_network_transmit_bytes_total{ job="node-repo", device="eth0"}[5m]) / 1024 / 1024) > 150
-    for: 5s
-    annotations:
-      title: High outbound port utilization
-      description: 'Outcoming port load > 150 Mb/s'
-    labels:
-      severity: 'crit'
-
-
-
-# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+    - alert: Vpn_NoClientConnected
+      expr: openvpn_server_connected_clients == 0
+      for: 10s
+      annotations:
+        title: 'No VPN Client Connected'
+        description: 'No VPN Client Connected'
+      labels:
+        severity: 'crit'
